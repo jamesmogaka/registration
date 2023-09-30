@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Registration</title>
+        <link href="registration.css" rel="stylesheet">
+        
+        <script type="module">
+            //
+            import {register} from "./registration.js";
+            //
+            window.onload = ()=>{
+                register();
+            };
+        </script>
+    </head>
+    <body>
+        <button id="register" >Register to Access Services on this Platform</button>
+        <!--
+        The login dialog box-->
+        <dialog id="login_dialog">
+            <p id="prompt">(All fields with <span>*</span> are required)</p>
+            <!--
+            The form is useful for performing the initial checks on inputs after
+            submission. For example, all required fields are checked for completeness
+            -->
+            <form action="" id="login_form">
+                <label>
+                    Username:<span>*</span> <input type="text" id="user_name" required > 
+                </label>
+                
+                <label>
+                    Password: <span>*</span> <input type="password" id="password" required >
+                </label>
+                
+                <label><input type="checkbox" id="show_password">Show password</label>
+                
+                <fieldset>
+                    <legend>What do you want to do? <span>*</span></legend>
+                        <label>
+                            <input type="radio" value ="up" name="option" required> Sign Up to be Member
+                        </label>
+                        
+                        <label>
+                            <input type="radio" value="in" name="option"> Sign In as Member
+                        </label>
+                       
+                </fieldset>
+                <p id="failed"></p>
+                <input type="submit" value="Go" id="go">    
+            </form>
+        </dialog>
+        <!-- Dialog for selecting the business you want to access for the session -->
+        <dialog id="selection_dialog">
+            <p>Fill out this area to enable proper redirection...</p>
+            <fieldset>
+                <legend>Please select the service <span>*</span></legend>
+                    <form id="selection_form">
+                        <div id="radio"></div>
+                        <input type="submit" value="Proceed">
+                    </form>
+            </fieldset>
+        </dialog> 
+        <dialog id="businesses_dialog">
+            <p id="instructions">Check the businesses you want to be registered to..</p>
+            <fieldset>
+                <legend>Available Businesses</legend>
+                <form id="businesses_form">
+                    <div id="checkbox"></div>
+                    <input type="text" placeholder="Add a business" id="input_business">
+                    <p id="business_form_error"></p>
+                    <div id="buttons">
+                        <input type="button" value="Add Business" id="add_business">
+                        <input type="submit" value="Proceed">
+                    </div>
+                </form>
+                
+            </fieldset>
+        </dialog>
+    </body>
+</html>

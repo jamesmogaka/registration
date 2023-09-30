@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>balansys</title>
+        <link href="registration.css" rel="stylesheet">
+        
+        <script type="module">
+            //
+            //Access the module that handles balansys
+            import {balansys} from "./balansys.js"
+            //
+            //Create an instance of balansys
+            const muli = new balansys();
+            //
+            //Make the instance available
+            window.muli = muli;
+        </script>
+    </head>
+    <body>
+        <p id="invitation">
+            <span onclick="muli.sign()" id="register">Register</span> to Access Services on this Platform
+        </p>
+
+        <p id="welcome" hidden>
+            Welcome <span id="username" style="color:green;"></span>.
+            Please <span style="color: blue;" onclick="muli.logout()">log out</span> when you are done
+        </p>
+    </body>
+</html>
