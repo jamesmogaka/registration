@@ -79,24 +79,6 @@ class registration extends view{
         if(!data) return;      
     }
     //
-    //
-    private forgot_password(data:credentials):user{
-        //
-        //
-    }
-    //
-    //
-    private change_password(data:credentials):user{
-        //
-        //
-    }
-    //
-    //
-    public update_details():user{
-        //
-        //
-    }
-    //
     //Remove the errors when changes are made to form input elements
     public on_input():void{
         //
@@ -209,17 +191,6 @@ class enrollment extends dialog<credentials>{
             //Here we handle authentication of exsistent users before allowing them
             //to access offerd services
             case 'in': return await this.sign_in(Outlook);
-            //
-            //This process generates a temporary password for the user to use before changing
-            //incase he/she has forgoten the pasword
-            //?????????? Here the password is not mandatory since the user has 
-            //forgotten his/her password ???????????????????
-            case 'forgot': return this.forgot_password(input);
-            //
-            //This handles the process of changing the user password on the database
-            //A user who has forgotten his/her password cannot change the password
-            //this is a viable solution only to users who know their current password
-            case 'change': return this.change_password(input);
             //
             //It is very difficult to reach at this point without selecting an opperation
             //The dialog system will have alredy informed the user during data collection
