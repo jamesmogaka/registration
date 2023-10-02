@@ -20,8 +20,12 @@ import {mutall_error} from "../../../schema/v/code/schema.js";
 //Use the dialog class to help in data collection
 import {dialog,raw} from "../../../mashamba/v/code/dialog.js";
 //
+//Help to implement DOM manipulation methods
+import {view} from "../../../outlook/v/code/view.js";
+//
 //The data being collected for user authentication
 type credentials = {
+    type:'credentials',
     //
     //The primary data that idendifies a user
     username:string, 
@@ -38,116 +42,59 @@ type key = keyof credentials;
 //Dirty credentials
 type dirty<data extends{[i in keyof data]:data[i]}> = {[i in keyof data]:data[i]|null| Error};
 //
+//Handles all registration activities
 //
-//A popup-based class that is to be exported as a module in order to
-//access registration services
-export class registration extends popup<user>{
+//The registration facilites provided by this class include:-
+//Sign in 
+//Sign up
+//Sign out
+//Password reset(Forgot password)
+//Changing password 
+//Updating User details
+class registration extends view{
     //
     //The key to the user in the local_storage. The key value is a son string of
     //Iuser. You can convert to a user by creating a new one
     static current_user:string = '___user';
     //
     //Allows for instantiation of the class 
-    constructor(){
+    constructor(public business?:string){
         //
-        //Use the registration html file to populate the popup
-        super("/registration/v/code/registration.html");
+        super();
     }
     //
-    //Intervene in show pannels so that we can present the form from its normal
-    //behavior
-    public async show_panels(): Promise<void>{
+    //Coordinate the various registration processes based on the operation
+    //that the user selected. We first create a dialog that will collect the data from
+    //the user then check the field operation to determine which process was 
+    //selected by the user and carry out the relevant operation
+    public async administer():Promise<user | undefined | Error>{
         //
-        await super.show_panels();
+        //Create a dialog to collect data from the user
+        const enroll = new enrollment(this.document.body);
         //
-        //Prevent the form from submitting data, as we want to take charge instead
-        this.get_element('login_form').onsubmit =(e)=>e.preventDefault();
-    }    
-    //
-    //Implement the required check method. It checks all the user inputs
-    //and returns true if they are all valid; otherwise false.
-    //It also saves the the user to the local storage, for use by other applications
-    public async check():Promise<boolean>{
+        //Get data form the dialog
+        const data: credentials | undefined = await enroll.administer();
         //
-        //Collect the signing credentials, with all its dirt
-        const Credentials:dirty<credentials> = {
-            username:this.get_value('username'),
-            password:this.get_value('password'),
-            email: this.get_value('email'),
-            operation:this.get_value('operation'),
-        }
-        //
-        //Get the keys of the credentials
-        const keys =<Array<key>>Object.keys(Credentials);
-        //
-        //Check that the inputs all valid, i.e., neither null nor erroneous. 
-        const dirty_keys = keys.filter((k)=>(typeof Credentials[k]!=='string'));
-        //
-        //If any of of the key values is dirty, the report them in the popup 
-        //and return false
-        if (dirty_keys.length>0){
-            //
-            //Report the dirty keys
-            dirty_keys.forEach(key => this.report_inconsistencies(key, Credentials));    
-            //
-            //Do not continue
-            return false;
-        }     
-        //
-        //Use the credentials to authenticate the visiting user
-        const {username, password, operation} = Credentials as credentials;
-        //
-        //2. Test if the user is new or old. If new, sign up; otherwise sign in
-        //
-        //2.1 Define the user that we will eventually to return
-        let new_user:user|Error;
-        //
-        //Check if the user forgot password
-        if(operation ==='forgot'){}
-        //
-        //2.2 Create the outlook provider to access sign-up or sign-in services
-        const Outlook = new outlook(username, password);
-        //
-        //2.3 Now do the authentication
-        if(operation==='up')  new_user = await Outlook.register_user();
-        else  new_user = await Outlook.authenticate_user();
-        //
-        //Handle the signing errors.
-        if (new_user instanceof Error) {
-            //
-            //Use the dialog to handle the error
-            this.get_element('report').textContent = new_user.message;
-            //
-            //Stop this signing
-            return false;
-        }
-        this.result= new_user;
-        //
-        //Save the user to the local storage
-        window.localStorage.setItem(registration.current_user, JSON.stringify(new_user));
-        //
-        //if the authentication is valid return tue otherwise report the 
-        //problem and return false.
-        return true;
+        //If the data collection process was aborted discontinue the process
+        if(!data) return;      
     }
     //
-    //Handle reporting of the errors
-    private report_inconsistencies(key:key, credentials: dirty<credentials>){
+    //
+    private forgot_password(data:credentials):user{
         //
-        //The key must be pointing to an error
-        const msg = (<Error> credentials[key]).message;
         //
-        //Report the error message
-        this.report_error(key, msg);
-    }   
+    }
     //
     //
-    public async get_result():Promise<user>{
+    private change_password(data:credentials):user{
         //
-        //test if the result is set; if no you have a problem
-        if (this.result===undefined) throw 'Result is not set yet';
         //
-        return this.result;
+    }
+    //
+    //
+    public update_details():user{
+        //
+        //
     }
     //
     //Remove the errors when changes are made to form input elements
@@ -176,7 +123,17 @@ export class registration extends popup<user>{
             //make the password readable and unreadable depending on the checkbox state
             if(show_element.checked)password_element.type = "text";            
             else password_element.type = "password";
-        })
+        });
+    }
+    //
+    //Retrieve the current logged in user and remove the user from the window storage
+    public logout():void{
+        //
+        //Exit the function if there's no user logged in
+        if(!(this.get_current_user())) return;
+        //
+        //Clear the current user from teh local storage
+        window.localStorage.removeItem(registration.current_user);
     }
     //
     //Get the user that is existing in the window storage, that is, the user 
@@ -196,68 +153,129 @@ export class registration extends popup<user>{
         //Creae a new user
         return new user(Iuser.name, Iuser.pk);
     }
+}
+//
+//This is the dialog that will help in collection of the user data for driving the
+//registration process
+class enrollment extends dialog<credentials>{
     //
-    //Retrieve the current logged in user and remove the user from the window storage
-    public logout():void{
+    //Reference to the user that has logged in 
+    public user?:user;
+    //
+    constructor(anchor:HTMLElement){
         //
-        //Exit the function if there's no user logged in
-        if(!(this.get_current_user())) return;
-        //
-        //Clear the current user from teh local storage
-        window.localStorage.removeItem(registration.current_user);
+        //Initialize the dialog with the given fragment and anchor
+        super({url:"/registration/v/code/registration.html",anchor});
     }
     //
-    //If a user forgets their password generate a temporary password,
-    //hash the password and modify the database to reflect the changed password
-    //then send this temporary password to the users email 
-    public async forgot_password():Promise<void> {
+    //Extract data from the registration form as it is with possibility for errors
+    //The dialog system will take care of the error checks and targeted reporting 
+    public async read():Promise<raw<credentials>>{
         //
-        //Get the username of the user and the email
-        const {username, email} = this.get_user(); 
+        //Compile the raw credentials by geting the inputs directly form the form
         //
-        //Use the fetch to communicate with the php
-        const response:Response =await fetch("./registartion.php",{
-            method:'POST',
-            body: JSON.stringify({username,email}),
-            headers:{
-                "Content-Type": "application/json"
-            }
-        });
+        //Whatever we read from the enrollment dialog changes depending on the operation.
+        //In that when the user selects sign in and sign up we require the user name,
+        //email and password and if the user selects forgot password we are required to
+        //collect the username and email. The case of change password is special since
+        //we need another dialog form to collect the current password and  
         //
-        //Check if the request was succesfull
-        if (!response.ok) 
-            throw new mutall_error("Problems communicating with the server");
         //
-        //Extract the result of the server operation
-        const result: "ok" | string = await response.text();
-        //
-        //If the operation was succesfull inform the user to check the mail for a new password
-        if (result !== "ok") this.report_error("report", result);
-        else this.report_error("report",`Temporary password succesfylly sent to ${email}. Check you inbox.`)
+        return {
+            type:'credentials',
+            username:this.get_value('username'),
+            password:this.get_value('password'),
+            email: this.get_value('email'),
+            operation:this.get_value('operation'),
+        }
     }
     //
-    //Collect the data form the registration/ log-in form using 
-    private get_user():dirty<{username: string; email: string}>{
+    //We have no data to populate in the registration system
+    public populate(data:credentials):void{}
+    //
+    //
+    public async save(input:credentials):Promise<"ok" | Error>{
         //
-        //Get the raw username from the user as it is with possibility of errors
-        const username:string| Error | null= this.get_value('username');
+        //Create an instance of the outlook class that would handle the authentication
+        //and registration processes
+        const Outlook = new outlook(input.username, input.password);
         //
-        //Get the email of from the user
-        const email:string| Error | null  = this.get_value('email');
-        //
-        return {username,email};
+        //Using the data collected select appropriate operation to conduct
+        switch (input.operation){
+            //
+            //Handle the registation of new users 
+            case 'up': return await this.sign_up(Outlook);
+            //
+            //Here we handle authentication of exsistent users before allowing them
+            //to access offerd services
+            case 'in': return await this.sign_in(Outlook);
+            //
+            //This process generates a temporary password for the user to use before changing
+            //incase he/she has forgoten the pasword
+            //?????????? Here the password is not mandatory since the user has 
+            //forgotten his/her password ???????????????????
+            case 'forgot': return this.forgot_password(input);
+            //
+            //This handles the process of changing the user password on the database
+            //A user who has forgotten his/her password cannot change the password
+            //this is a viable solution only to users who know their current password
+            case 'change': return this.change_password(input);
+            //
+            //It is very difficult to reach at this point without selecting an opperation
+            //The dialog system will have alredy informed the user during data collection
+            //that he cannot proceed without selection of an operation since it is required
+            default: return new mutall_error("Please select an operation");
+        }
     }
     //
-    //Get the old(temporary) password and the new password form the user 
-    //Verify that both fields are filled and the old password corresponds 
-    //to what is there in the database and only then can we proceed with actual 
-    //changing of the password (Hashing the new password and modifying the user record in the db)
-    public change_password(): void{
+    //Using the outlook instance given acces the authentication service
+    //The result of a succesfull authentication process is a user otherwise an error
+    //The user details are stored in the local storage and also returned if the 
+    //???????????? We are not using the credentials at this poin
+    public async sign_in(/*data:credentials,*/ auth:outlook):Promise<"ok" | Error>{
         //
-        //Wait for the user to input the two passwords and intiate the process
+        //Authenticate the user 
+        const user:user | Error = await auth.authenticate_user();
         //
+        //Incase there was a problem with the process return the error that was gotten
+        if(user instanceof Error) return user;
         //
+        //At this point we know that the user was succesfully authenticated 
+        //We then store the user both in the local storage and as a property
+        this.user = user;
         //
+        window.localStorage.setItem(registration.current_user, JSON.stringify(user));
         //
+        //Finally return ok to indicate that the authentication process was succesfull
+        return "ok";
+    }
+    //
+    //????????The current registar_user method in the outlook does not take care
+    //of the fact that we need the user to provide an email which will be helpful 
+    //incase of forget password
+    //
+    //
+    //Using the authentication instance perfom the enrollment of the new user
+    //After succesfull enrollment we expect the user property of this enrollment
+    //class to be updated and the enrolled user records to be stored in the local 
+    //storage of the browser. In case the registration process was not successfull
+    //the function returns the error.
+    public async sign_up(auth:outlook):Promise<"ok" | Error>{
+        //
+        //Register the user 
+        const user:user | Error = await auth.register_user();
+        //
+        //Incase there was a problem with the process return the error that was gotten
+        if(user instanceof Error) return user;
+        //
+        //At this point we know that the user was succesfully registered 
+        //We then store the user both in the local storage and as a property
+        this.user = user;
+        //
+        window.localStorage.setItem(registration.current_user, JSON.stringify(user));
+        //
+        //Finally return ok to indicate that the authentication process was succesfull
+        return "ok";
     }
 }
+
