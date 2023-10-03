@@ -172,10 +172,6 @@ class enrollment extends dialog<credentials>{
         }
     }
     //
-    //We have no data to populate in the registration system
-    public populate(data:credentials):void{}
-    //
-    //
     public async save(input:credentials):Promise<"ok" | Error>{
         //
         //Create an instance of the outlook class that would handle the authentication
