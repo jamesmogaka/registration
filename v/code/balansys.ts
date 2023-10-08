@@ -13,28 +13,23 @@ export class balansys{
     //
     //To facilitate instantiation of the class
     constructor(){
-
+        //
         //Create an instance of the registration class in order to access
         //the services it offers
         this.register = new registration();
     }
-
-    
     //
     //Method that handles signing in the system
     async sign():Promise<void>{
-        //
         //
         //Get the user that has logged in/registered
         const User:user|undefined =  await this.register.administer();
         //
         //If the registration was aborted, do not continue with sign procedure
         if (User===undefined) return;
-
         //
-        //Welcome the user
+        //Welcome the user upon successful signing in
         this.welcome(User);
-        
     }
     //
     //Method responsible for welcoming the user
@@ -47,7 +42,7 @@ export class balansys{
         //message
         document.getElementById('invitation')!.hidden = true;
         document.getElementById('welcome')!.hidden=false;
-        document.getElementById('username')!.innerHTML = User.name
+        document.getElementById('user_name')!.innerHTML = User.name
     }
     //
     //Logout the user that is currently logged in
