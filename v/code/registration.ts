@@ -51,7 +51,7 @@ type dirty<data extends{[i in keyof data]:data[i]}> = {[i in keyof data]:data[i]
 //Password reset(Forgot password)
 //Changing password 
 //Updating User details
-class registration extends view{
+export class registration extends view{
     //
     //The key to the user in the local_storage. The key value is a son string of
     //Iuser. You can convert to a user by creating a new one
@@ -67,7 +67,7 @@ class registration extends view{
     //that the user selected. We first create a dialog that will collect the data from
     //the user then check the field operation to determine which process was 
     //selected by the user and carry out the relevant operation
-    public async administer():Promise<user | undefined | Error>{
+    public async administer():Promise<user | undefined>{
         //
         //Create a dialog to collect data from the user
         const enroll = new enrollment(this.document.body);
@@ -189,11 +189,6 @@ class enrollment extends dialog<credentials>{
             operation:this.get_value('operation'),
         }
     }
-    //
-    //We have no data to populate in the registration system
-    public populate(data:credentials):void{}
-    //
-    //
     public async save(input:credentials):Promise<"ok" | Error>{
         //
         //Create an instance of the outlook class that would handle the authentication
