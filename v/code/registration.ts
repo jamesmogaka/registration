@@ -30,7 +30,6 @@ type credentials = {
     //The primary data that idendifies a user
     username:string, 
     password:string,
-    email:string,
     //
     //The authentication processes a user can undertake
     operation:string
@@ -51,7 +50,7 @@ type dirty<data extends{[i in keyof data]:data[i]}> = {[i in keyof data]:data[i]
 //Password reset(Forgot password)
 //Changing password 
 //Updating User details
-class registration extends view{
+export class registration extends view{
     //
     //The key to the user in the local_storage. The key value is a son string of
     //Iuser. You can convert to a user by creating a new one
@@ -67,7 +66,7 @@ class registration extends view{
     //that the user selected. We first create a dialog that will collect the data from
     //the user then check the field operation to determine which process was 
     //selected by the user and carry out the relevant operation
-    public async administer():Promise<user | undefined | Error>{
+    public async administer():Promise<user | undefined>{
         //
         //Create a dialog to collect data from the user
         const enroll = new enrollment(this.document.body);
@@ -76,17 +75,10 @@ class registration extends view{
         const data: credentials | undefined = await enroll.administer();
         //
         //If the data collection process was aborted discontinue the process
-        if(!data) return;      
-    }
-    //
-    //Remove the errors when changes are made to form input elements
-    public on_input():void{
+        if(!data) return undefined;
         //
-        //Get the elements with class 'error' then remove the error message
-        const errors = this.document.querySelectorAll('.error');
-        //
-        //Clear any error messages on the form
-        errors.forEach(error=>error.textContent='');
+        //We get the user from the enroll if there is one present
+        return enroll.user;    
     }
     //
     //Show and hide the password 
@@ -167,7 +159,6 @@ class enrollment extends dialog<credentials>{
             type:'credentials',
             username:this.get_value('username'),
             password:this.get_value('password'),
-            email: this.get_value('email'),
             operation:this.get_value('operation'),
         }
     }
