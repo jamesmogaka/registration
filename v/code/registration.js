@@ -184,6 +184,70 @@ class enrollment extends dialog {
         this.user = user;
         //
         window.localStorage.setItem(registration.current_user, JSON.stringify(user));
+    }
+    //
+    //Extract data from the registration form as it is with possibility for errors
+    //The dialog system will take care of the error checks and targeted reporting 
+    async read() {
+        //
+        //Compile the raw credentials by geting the inputs directly form the form
+        //
+        //Whatever we read from the enrollment dialog changes depending on the operation.
+        //In that when the user selects sign in and sign up we require the user name,
+        //email and password and if the user selects forgot password we are required to
+        //collect the username and email. The case of change password is special since
+        //we need another dialog form to collect the current password and  
+        //
+        //
+        return {
+            type: 'credentials',
+            username: this.get_value('username'),
+            password: this.get_value('password'),
+            operation: this.get_value('operation'),
+        };
+    }
+    //
+    async save(input) {
+        //
+        //Create an instance of the outlook class that would handle the authentication
+        //and registration processes
+        const Outlook = new outlook(input.username, input.password);
+        //
+        //Using the data collected select appropriate operation to conduct
+        switch (input.operation) {
+            //
+            //Handle the registation of new users 
+            case 'up': return await this.sign_up(Outlook);
+            //
+            //Here we handle authentication of exsistent users before allowing them
+            //to access offerd services
+            case 'in': return await this.sign_in(Outlook);
+            //
+            //It is very difficult to reach at this point without selecting an opperation
+            //The dialog system will have alredy informed the user during data collection
+            //that he cannot proceed without selection of an operation since it is required
+            default: return new mutall_error("Please select an operation");
+        }
+    }
+    //
+    //Using the outlook instance given acces the authentication service
+    //The result of a succesfull authentication process is a user otherwise an error
+    //The user details are stored in the local storage and also returned if the 
+    //???????????? We are not using the credentials at this poin
+    async sign_in(/*data:credentials,*/ auth) {
+        //
+        //Authenticate the user 
+        const user = await auth.authenticate_user();
+        //
+        //Incase there was a problem with the process return the error that was gotten
+        if (user instanceof Error)
+            return user;
+        //
+        //At this point we know that the user was succesfully authenticated 
+        //We then store the user both in the local storage and as a property
+        this.user = user;
+        //
+        window.localStorage.setItem(registration.current_user, JSON.stringify(user));
         //
         //Finally return ok to indicate that the authentication process was succesfull
         return "ok";
