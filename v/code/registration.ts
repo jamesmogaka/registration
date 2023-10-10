@@ -163,7 +163,7 @@ class enrollment extends dialog<credentials>{
         }
     }
     //
-    public async save(input:credentials):Promise<"ok" | Error>{
+    public async save(input:credentials):Promise<"Ok" | Error>{
         //
         //Create an instance of the outlook class that would handle the authentication
         //and registration processes
@@ -190,7 +190,7 @@ class enrollment extends dialog<credentials>{
     //The result of a succesfull authentication process is a user otherwise an error
     //The user details are stored in the local storage and also returned if the 
     //???????????? We are not using the credentials at this poin
-    public async sign_in(/*data:credentials,*/ auth:outlook):Promise<"ok" | Error>{
+    public async sign_in(/*data:credentials,*/ auth:outlook):Promise<"Ok" | Error>{
         //
         //Authenticate the user 
         const user:user | Error = await auth.authenticate_user();
@@ -205,7 +205,7 @@ class enrollment extends dialog<credentials>{
         window.localStorage.setItem(registration.current_user, JSON.stringify(user));
         //
         //Finally return ok to indicate that the authentication process was succesfull
-        return "ok";
+        return "Ok";
     }
     //
     //????????The current registar_user method in the outlook does not take care
@@ -218,7 +218,7 @@ class enrollment extends dialog<credentials>{
     //class to be updated and the enrolled user records to be stored in the local 
     //storage of the browser. In case the registration process was not successfull
     //the function returns the error.
-    public async sign_up(auth:outlook):Promise<"ok" | Error>{
+    public async sign_up(auth:outlook):Promise<"Ok" | Error>{
         //
         //Register the user 
         const user:user | Error = await auth.register_user();
@@ -233,7 +233,7 @@ class enrollment extends dialog<credentials>{
         window.localStorage.setItem(registration.current_user, JSON.stringify(user));
         //
         //Finally return ok to indicate that the authentication process was succesfull
-        return "ok";
+        return "Ok";
     }
 }
 
