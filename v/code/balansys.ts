@@ -71,9 +71,9 @@ export class balansys extends view{
         //Employ the logic of welcoming the user to the site
         //Hide the invitation text content and show the welcome
         //message
-        document.getElementById('invitation')!.hidden = true;
-        document.getElementById('welcome')!.hidden=false;
-        document.getElementById('user_name')!.innerHTML = User.name
+        this.get_element('invitation').hidden = true;
+        this.get_element('welcome').hidden=false;
+        this.get_element('user_name')!.innerHTML = User.name;
     }
     //
     //Logout the user that is currently logged in
@@ -81,5 +81,11 @@ export class balansys extends view{
         //
         //Call the logout method
         this.register.logout();
+        //
+        //Hide the user welcoming message
+        this.get_element('invitation').hidden = false;
+        //
+        //Display the user register/ login method
+        this.get_element('welcome').hidden = true;
     }
 }
