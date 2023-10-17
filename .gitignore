@@ -2,3 +2,4 @@ nbproject/
 portfolio/
 v/code/log.xml
 *.js
+.prettierrc.json
