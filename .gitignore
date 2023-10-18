@@ -1,2 +1,4 @@
 nbproject/
 portfolio/
+.prettierrc.json
+*.js

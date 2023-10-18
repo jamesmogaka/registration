@@ -1,69 +1,68 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <title>Registration</title>
-        <link href="registration.css" rel="stylesheet">
-        
-        <script type="module">
-            //
-            //Access the registration module
-            import {registration} from "./registration.js";
-            //
-            //Create an instance of the class
-            const register = new registration();
-            //
-            //Make the instance available
-            window.register = register;
-        </script>
-    </head>
-    <body>
-        <p>(Please fill out all fields..)</p>
-        <!--
-        The form is useful for performing the initial checks on inputs after
-        submission. For example, all required fields are checked for completeness
-        -->
-        <form id="login_form" oninput="register.on_input()">
-            
-            <label id="username" data-required="true" data-iotype="text">
-                Username: <input type="text"/> 
-                <span class="required">*</span>
-                <span class="error"></span>
-            </label>
-            
-            <label id="password" data-required="true" data-iotype="text">
-                Password: <input type="password"/>
-                <span class="required">*</span>
-                <span class="error"></span>
-            </label>
-            
-            <label>
-                <input type="checkbox" id="show_password" onchange="register.show_password()">Show password
-            </label>
-            
-            <fieldset id="operation" data-iotype="radio" data-required="true">
-                <legend >What do you want to do?<span class="required"> * </span>></legend>
-                <label>
-                    <input type="radio" value ="up" name="operation"> Sign Up to be Member
+<html lang="en">
+
+<head>
+    <title>Registration</title>
+    <link rel="stylesheet" href="form.css">
+</head>
+
+<body>
+    <form>
+
+        <fieldset>
+            <fieldset>
+                <!-- the sign in option -->
+                <legend>
+                    <input type="radio" name="keywords"  value="option1">
+                    Sign in
+                </legend>
+                <label>Username
+                    <input type="text" name="fileInput"><br>
+                </label>
+                <label>Password
+                    <input type="text" name="fileInput"><br>
+                </label>
+            </fieldset>
+
+            <fieldset>
+                <!-- the sign Up option -->
+                <legend>
+                    <input type="radio" name="keywords" value="option2">
+                    Sign Up
+                </legend>
+                <label>Username
+                    <input type="text" name="fileInput"><br>
+                </label>
+                <label>Password
+                    <input type="text" name="fileInput"><br>
+                </label>
+                <label>email
+                    <input type="text"><br>
+                </label>
+            </fieldset>
+
+            <fieldset>
+                <!-- the Password option-->
+                <legend>
+                    <input type="radio" name="keywords" value="option3">
+                    Password
+                </legend>
+                <label>Username
+                    <input type="text"><br>
+                </label>
+                <label>email
+                    <input type="text">
                 </label>
 
-                <label>
-                    <input type="radio" value="in" name="operation"> Sign In as Member
-                </label>
-                
-                 <label>
-                    <input type="radio" value="forgot" name="operation"> forgot password
-                </label>
-                <span class="error"></span>
             </fieldset>
-            
-            <!-- Report sign in errors here -->
-            <p class="error" id="report"></p>
-            
-            <div class="buttons">
-                <button id="go">Submit</button>
-                <button id="cancel">Cancel</button>
-            </div>
-        </form>
-    </body>
+
+        </fieldset>
+
+        <button onclick="alert('Submitted')">Submit </button>
+        <button onclick="alert('Cancelled')">Cancel</button>
+
+    </form>
+
+</body>
+
 </html>
