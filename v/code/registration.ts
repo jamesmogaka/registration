@@ -1,6 +1,6 @@
 //
 //Access the user class to use it as a data type
-import { user, Iuser } from '../../../outlook/v/code/app.js';
+import { user, Iuser, business } from '../../../outlook/v/code/app.js';
 //
 //To access the registration ad authentication services
 import { outlook } from '../../../outlook/v/code/login.js';
@@ -62,14 +62,37 @@ export class registration extends view {
         //Create a dialog to collect data from the user
         const enroll = new enrollment(this.document.body);
         //
-        //Get data form the dialog
-        const data: credentials | undefined = await enroll.administer();
+        //Using the dilog handle the registration process
+        await enroll.administer();
         //
-        //If the data collection process was aborted discontinue the process
-        if (!data) return undefined;
+        //Ensure that the user is there if absent assume that there was an issue
+        //and discontinue the process
+        if (!enroll.user) return undefined;
         //
-        //We get the user from the enroll if there is one present
-        return enroll.user;
+        //When we get here the user authentication was successful
+        //We need to establish all the businesses a user is associated with in the database
+        let businesses: Array<business> = this.get_busineses(enroll.user);
+        //
+        //If the user is not registerd as a member of any business
+        //Ask him or her to select all the businesses that he/her is involved with and save them to the db
+        if (businesses.length === 0) businesses = this.save_user_businesses(enroll.user);
+        //
+        //After saving the businesses check to see if this registration process was invoked form a given business
+        if (this.business) {
+            //
+            //If the user is a member of the business that launched the registration system record the business details
+            //of the business to associate the user with the business in the current login session
+            if (businesses.find((business) => business.id === this.business))
+                return this.set_business(enroll.user, this.business);
+            //
+            //If the user is not a member of the business we ask him to register for the given business 
+            //by showing the business registration dialog box
+            this.save_user_businesses(enroll.user);
+        }
+        //
+        //Ask the user which business should be linked with the current log in session
+        //Return the user with the business included
+        return this.select_business(enroll.user);
     }
     //
     //Show and hide the password
@@ -232,3 +255,5 @@ class enrollment extends dialog<credentials> {
         return 'Ok';
     }
 }
+//
+//Collection of all the businesses that a user associates with
