@@ -32,6 +32,16 @@ type credentials = {
     operation: string;
 };
 //
+//Handle membership infomation of a given user from the database
+interface Imember {
+    //
+    //The primary key of the member
+    member: number;
+    //
+    //A collection of all the businesses a member is involved with
+    businesses: Array<business>;
+}
+//
 //Handles all registration activities
 //
 //The registration facilites provided by this class include:-
@@ -71,11 +81,11 @@ export class registration extends view {
         //
         //When we get here the user authentication was successful
         //We need to establish all the businesses a user is associated with in the database
-        let businesses: Array<business> = this.get_busineses(enroll.user);
+        let businesses: Array<business> = await this.get_businesses(enroll.user);
         //
         //If the user is not registerd as a member of any business
         //Ask him or her to select all the businesses that he/her is involved with and save them to the db
-        if (businesses.length === 0) businesses = this.save_user_businesses(enroll.user);
+        if (businesses.length === 0) businesses = await this.save_user_businesses(enroll.user);
         //
         //After saving the businesses check to see if this registration process was invoked form a given business
         if (this.business) {
@@ -85,7 +95,7 @@ export class registration extends view {
             if (businesses.find((business) => business.id === this.business))
                 return this.set_business(enroll.user, this.business);
             //
-            //If the user is not a member of the business we ask him to register for the given business 
+            //If the user is not a member of the business we ask him to register for the given business
             //by showing the business registration dialog box
             this.save_user_businesses(enroll.user);
         }
@@ -93,6 +103,61 @@ export class registration extends view {
         //Ask the user which business should be linked with the current log in session
         //Return the user with the business included
         return this.select_business(enroll.user);
+    }
+    //
+    //Get All the businesses in the database that a given user is a member of
+    //Formulate a query that returns all the businesses that the given user is involved with
+    //Execute the query to retrieve the data.
+    async get_businesses(User: user): Promise<Array<business>> {
+        //
+        //THis is the sql to get all the
+        const sql: string = `
+            SELECT 
+                member.member,
+                json_ArrayAgg(
+                    json_object(
+                        business.id,
+                        business.name
+                    )
+                ) AS Busness
+            FROM 
+                member 
+                INNER JOIN user ON member.user = user.user 
+                INNER JOIN business ON member.business = business.business
+            WHERE user.user = ${User.pk}
+            GROUP BY member.member;
+        `;
+        //
+        //Execute the query using the library
+        const results: Array<Imember> = await server.exec(
+            'database',
+            ['mutall_users'],
+            'get_sql_data',
+            [sql]
+        );
+        //
+        //Ensure that only one user
+        //????????????????????????
+        return results[0].businesses;
+    }
+    //
+    //Open a dialog that will be used to get all the registared businesses that a 
+    //user is involved with. 
+    //Out of this process you get out with an Array of businesses or the programm
+    //crash
+    private async save_user_businesses(user: user): Promise<Array<business>>{
+        //
+        //Create an instance of the business registration dialog
+        const dlg = new business_registration(user);
+        //
+        //Show the dialog to initiate the data collection process
+        const results: Array<business>| undefined = await dlg.administer();
+        //
+        //Check to see if the user finished the business registration process
+        if(results) return results;
+        //
+        //Crash the program if the user did not register businesses 
+        throw new mutall_error("You must registar the businesses you are a member of");
     }
     //
     //Show and hide the password
@@ -256,4 +321,69 @@ class enrollment extends dialog<credentials> {
     }
 }
 //
-//Collection of all the businesses that a user associates with
+//Drive the business registartion process using the bellow class
+//This is a dialog that gets the businesses a user is involved with and 
+//save the user as a member to the businesses
+class business_registration extends dialog<Array<business>>{
+    //
+    //Usefull for creation of instances of this class
+    //To successfully do business registation we need to know which user is doing
+    //the business registration. This infomation is helpfull in saving to the db
+    constructor(public user:user){
+        //
+        //initialize an instance of the parent
+        super();
+    }
+    //
+    //Get the input form the form for saving 
+    async read():Promise<Array<business>>{
+        //
+        //
+    }
+    //
+    //Create membership for the selected number of businesses
+    //Given the businesses of a given user we need to record the selected businesses
+    //to the database here we use 
+    async save(Input:Array<business>): Promise<Error | "Ok">{
+        //
+        //
+    }
+    //
+    //This is the final chance to influence the form appearance
+    //Here i want to paint my form with dynamic content from the db
+    public async onopen():Promise<void>{
+        //
+        //Formulate a querry to get all businesses in the database
+        const sql:string = "";
+        //
+        //Get the businesses
+        //?????? investigate the suitable return type of the query????
+        const results: Array<string> = server.exec(
+            "database",
+            ["mutall_user", false],
+            "get_sql_data",
+            [sql]
+        );
+        //
+        //Iterate over the businesses creating a checkbox for each
+        results.forEach(result => {
+            //
+            //Create an evelope ?????
+            const env: HTMLLabelElement = this.create_element("label", this.visual, {id:``});
+            //
+            //Create the acctual checkbox?????????
+            this.create_element("input", env, {type:"checkbox"});
+        })
+        //
+        //Create a general Reporting area for the dialog
+        this.create_element("span", this.visual, {id: "report", className:"error"});
+        //
+        //Finall create the buttons for driving the data collection process
+        //
+        //submit
+        this.create_element("button", this.visual,{id:"submit", textContent:"submit"});
+        //
+        //cancel
+        this.create_element("button", this.visual,{id:"cancel", textContent:"cancel"});
+    }
+}
