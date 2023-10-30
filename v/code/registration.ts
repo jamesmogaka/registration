@@ -33,13 +33,13 @@ type credentials = {
 };
 //
 //Handle membership infomation of a given user from the database
-interface Imember {
+interface Imembership {
     //
     //The primary key of the member
     member: number;
     //
     //A collection of all the businesses a member is involved with
-    businesses: Array<business>;
+    business: Array<business>;
 }
 //
 //Handles all registration activities
@@ -81,11 +81,11 @@ export class registration extends view {
         //
         //When we get here the user authentication was successful
         //We need to establish all the businesses a user is associated with in the database
-        let businesses: Array<business> = await this.get_businesses(enroll.user);
+        let businesses: Array<business> | null = await this.get_businesses(enroll.user);
         //
         //If the user is not registerd as a member of any business
         //Ask him or her to select all the businesses that he/her is involved with and save them to the db
-        if (businesses.length === 0) businesses = await this.save_user_businesses(enroll.user);
+        if (!businesses) businesses = await this.save_user_businesses(enroll.user);
         //
         //After saving the businesses check to see if this registration process was invoked form a given business
         if (this.business) {
@@ -108,37 +108,46 @@ export class registration extends view {
     //Get All the businesses in the database that a given user is a member of
     //Formulate a query that returns all the businesses that the given user is involved with
     //Execute the query to retrieve the data.
-    async get_businesses(User: user): Promise<Array<business>> {
+    async get_businesses(User: user): Promise<Array<business>| null> {
         //
         //THis is the sql to get all the
         const sql: string = `
             SELECT 
-                member.member,
-                json_ArrayAgg(
-                    json_object(
+                user.user,
+                JSON_ARRAYAGG(
+                    JSON_OBJECT(
+                        "id",
                         business.id,
+                        "name",
                         business.name
                     )
-                ) AS Busness
+                ) AS businesses
             FROM 
                 member 
                 INNER JOIN user ON member.user = user.user 
                 INNER JOIN business ON member.business = business.business
             WHERE user.user = ${User.pk}
-            GROUP BY member.member;
+            GROUP BY user.user;
         `;
         //
         //Execute the query using the library
-        const results: Array<Imember> = await server.exec(
+        const results: Array<{user:number, businesses:string}> = await server.exec(
             'database',
-            ['mutall_users'],
+            ['mutall_users',false],
             'get_sql_data',
             [sql]
         );
         //
+        //Ensure that a user was retrieved 
+        if (results.length === 0) 
+            throw new mutall_error(`We found no such user in the database!!`);
+        //
         //Ensure that only one user
-        //????????????????????????
-        return results[0].businesses;
+        if (results.length > 1) 
+            throw new mutall_error(`We expected only one user but got ${results.length}`);
+        //
+        //return the user membership infomation 
+        return JSON.parse(results[0].businesses);
     }
     //
     //Open a dialog that will be used to get all the registared businesses that a 
@@ -154,6 +163,7 @@ export class registration extends view {
         const results: Array<business>| undefined = await dlg.administer();
         //
         //Check to see if the user finished the business registration process
+        //returning the results of the process incase of success
         if(results) return results;
         //
         //Crash the program if the user did not register businesses 
@@ -220,7 +230,7 @@ class enrollment extends dialog<credentials> {
     constructor(anchor: HTMLElement) {
         //
         //Initialize the dialog with the given fragment and anchor
-        super({ url: '/registration/v/code/registration.html', anchor });
+        super(anchor, undefined, true, '/registration/v/code/registration.html');
     }
     //
     //Extract data from the registration form as it is with possibility for errors
@@ -341,7 +351,7 @@ class business_registration extends dialog<Array<business>>{
         //
     }
     //
-    //Create membership for the selected number of businesses
+    //Create member for the selected number of businesses
     //Given the businesses of a given user we need to record the selected businesses
     //to the database here we use 
     async save(Input:Array<business>): Promise<Error | "Ok">{
@@ -350,40 +360,47 @@ class business_registration extends dialog<Array<business>>{
     }
     //
     //This is the final chance to influence the form appearance
-    //Here i want to paint my form with dynamic content from the db
+    //Here the goal is to paint my form with dynamic content from the db
     public async onopen():Promise<void>{
         //
         //Formulate a querry to get all businesses in the database
-        const sql:string = "";
+        const sql:string = "SELECT business, id, name FROM business";
         //
-        //Get the businesses
-        //?????? investigate the suitable return type of the query????
-        const results: Array<string> = server.exec(
+        //Get the businesses from the database
+        const results: Array<{
+            business:number, 
+            id:string, 
+            name: string
+        }> = await server.exec(
             "database",
             ["mutall_user", false],
             "get_sql_data",
             [sql]
         );
         //
+        //Create an evelope for all the checkboxes
+        const env: HTMLLabelElement = this.create_element("label", this.proxy, {id:`business`});
+        //
         //Iterate over the businesses creating a checkbox for each
         results.forEach(result => {
             //
-            //Create an evelope ?????
-            const env: HTMLLabelElement = this.create_element("label", this.visual, {id:``});
-            //
             //Create the acctual checkbox?????????
-            this.create_element("input", env, {type:"checkbox"});
+            this.create_element("input", env, {
+                type:"checkbox",
+                textContent: result.name,
+                value: result.id
+            });
         })
         //
-        //Create a general Reporting area for the dialog
-        this.create_element("span", this.visual, {id: "report", className:"error"});
+        //Create a error reporting section 
+        this.create_element("span", env, {id: "report", className:"error"});
         //
         //Finall create the buttons for driving the data collection process
         //
         //submit
-        this.create_element("button", this.visual,{id:"submit", textContent:"submit"});
+        this.create_element("button", this.proxy,{id:"submit", textContent:"submit"});
         //
         //cancel
-        this.create_element("button", this.visual,{id:"cancel", textContent:"cancel"});
+        this.create_element("button", this.proxy,{id:"cancel", textContent:"cancel"});
     }
 }
